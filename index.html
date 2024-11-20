@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Nation Wardrobe</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <img src="./logo.png" alt="Fire Nation Logo" />
+        <h1>Fire Nation Wardrobe</h1>
+    </header>
+    <div id="container">
+        <div id="controls">
+            <h1>Upload or Search</h1>
+            <input type="file" id="upload" accept=".png" />
+            <input type="text" id="username" placeholder="Enter Minecraft Username" />
+            <button id="searchButton">Search</button>
+            <button id="downloadButton" style="display: none;">Download Skin</button>
+        </div>
+        <div id="viewer">
+            <canvas id="skinViewer"></canvas>
+        </div>
+    </div>
+    <script src="main.js" type="module"></script>
+</body>
+</html>
