@@ -38,7 +38,7 @@ const overlayRobe = (skinBase64) => {
       };
 
       // Path to the robe texture
-      robeImage.src = "./textures/robe.png"; // Adjust this path based on your folder structure
+      robeImage.src = "./public/robe.png"; // Adjust this path based on your folder structure
     };
 
     // Load the base skin image
