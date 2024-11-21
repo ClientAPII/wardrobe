@@ -12,8 +12,10 @@ const viewer = new SkinViewer({
 viewer.controls.enableZoom = true;
 viewer.controls.enableRotate = true;
 
+let currentSkinBase64 = null; // Store the current skin in base64 format
+
 // Function to overlay the selected clothing onto the skin
-const overlayClothing = (skinBase64, clothingPath) => {
+const overlayClothing = (clothingPath) => {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
@@ -40,37 +42,26 @@ const overlayClothing = (skinBase64, clothingPath) => {
       clothingImage.src = clothingPath; // Path to the selected clothing texture
     };
 
-    skinImage.src = skinBase64;
+    skinImage.src = currentSkinBase64;
   });
 };
 
-// Function to load a skin with the selected clothing
-const loadSkinWithClothing = async (skinUrl) => {
-  const response = await fetch(skinUrl);
-  const blob = await response.blob();
-  const reader = new FileReader();
+// Function to update the 3D viewer and download link with the selected clothing
+const updateClothing = async () => {
+  const clothingPath = document.getElementById("clothingSelect").value;
+  const modifiedSkin = await overlayClothing(clothingPath);
 
-  reader.onload = async (event) => {
-    const skinBase64 = event.target.result;
+  viewer.loadSkin(modifiedSkin);
 
-    // Get the selected clothing path
-    const clothingPath = document.getElementById("clothingSelect").value;
-
-    const modifiedSkin = await overlayClothing(skinBase64, clothingPath);
-    viewer.loadSkin(modifiedSkin);
-
-    // Enable and configure download button
-    const downloadButton = document.getElementById("downloadButton");
-    downloadButton.style.display = "block";
-    downloadButton.onclick = () => {
-      const link = document.createElement("a");
-      link.href = modifiedSkin;
-      link.download = "modified_skin.png";
-      link.click();
-    };
+  // Enable and configure download button
+  const downloadButton = document.getElementById("downloadButton");
+  downloadButton.style.display = "block";
+  downloadButton.onclick = () => {
+    const link = document.createElement("a");
+    link.href = modifiedSkin;
+    link.download = "modified_skin.png";
+    link.click();
   };
-
-  reader.readAsDataURL(blob);
 };
 
 // Event listener for file upload
@@ -79,7 +70,8 @@ document.getElementById("upload").addEventListener("change", (e) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = (event) => {
-      loadSkinWithClothing(event.target.result);
+      currentSkinBase64 = event.target.result;
+      updateClothing(); // Update the 3D model with the selected clothing
     };
     reader.readAsDataURL(file);
   }
@@ -90,7 +82,6 @@ document.getElementById("searchButton").addEventListener("click", async () => {
   const username = document.getElementById("username").value;
   if (username) {
     try {
-      // Fetch user data from Ashcon API
       const response = await fetch(`https://api.ashcon.app/mojang/v2/user/${username}`);
       if (!response.ok) {
         alert("Username not found!");
@@ -101,18 +92,20 @@ document.getElementById("searchButton").addEventListener("click", async () => {
 
       // Use Crafatar to get the skin
       const skinUrl = `https://crafatar.com/skins/${uuid}`;
-      loadSkinWithClothing(skinUrl); // Load the skin with the selected clothing
+      const skinResponse = await fetch(skinUrl);
+      const blob = await skinResponse.blob();
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        currentSkinBase64 = event.target.result;
+        updateClothing(); // Update the 3D model with the selected clothing
+      };
+      reader.readAsDataURL(blob);
     } catch (error) {
       alert("An error occurred while fetching the skin.");
     }
   }
 });
 
-// Update the clothing when a new option is selected
-document.getElementById("clothingSelect").addEventListener("change", async () => {
-  // Reload the skin with the newly selected clothing
-  const skinUrl = viewer.skin; // Reuse the current skin URL
-  if (skinUrl) {
-    loadSkinWithClothing(skinUrl);
-  }
-});
+// Event listener for clothing selection
+document.getElementById("clothingSelect").addEventListener("change", updateClothing);

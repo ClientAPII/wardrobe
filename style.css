@@ -120,3 +120,31 @@ canvas {
 #downloadButton:hover {
   background: #28a745; /* Darker green on hover */
 }
+
+.custom-select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.custom-select select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #72767d;
+  border-radius: 5px;
+  background: #40444b;
+  color: #dcddde;
+  font-size: 1rem;
+  appearance: none; /* Hide default dropdown icon */
+  cursor: pointer;
+}
+
+.custom-select::after {
+  content: "▼"; /* Custom dropdown arrow */
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  color: #dcddde;
+  pointer-events: none;
+}
