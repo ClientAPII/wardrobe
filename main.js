@@ -12,13 +12,13 @@ const viewer = new SkinViewer({
 viewer.controls.enableZoom = true;
 viewer.controls.enableRotate = true;
 
-// Function to overlay the robe texture onto the skin
-const overlayRobe = (skinBase64) => {
+// Function to overlay the selected clothing onto the skin
+const overlayClothing = (skinBase64, clothingPath) => {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
   const skinImage = new Image();
-  const robeImage = new Image();
+  const clothingImage = new Image();
 
   canvas.width = 64;
   canvas.height = 64;
@@ -28,33 +28,35 @@ const overlayRobe = (skinBase64) => {
       // Draw the base skin
       ctx.drawImage(skinImage, 0, 0, 64, 64);
 
-      robeImage.onload = () => {
-        // Overlay the robe texture
-        ctx.drawImage(robeImage, 0, 0, 64, 64);
+      clothingImage.onload = () => {
+        // Overlay the selected clothing texture
+        ctx.drawImage(clothingImage, 0, 0, 64, 64);
 
         // Convert the modified skin back to base64
         const modifiedSkinBase64 = canvas.toDataURL("image/png");
         resolve(modifiedSkinBase64);
       };
 
-      // Path to the robe texture
-      robeImage.src = "./robe.png"; // Adjust this path based on your folder structure
+      clothingImage.src = clothingPath; // Path to the selected clothing texture
     };
 
-    // Load the base skin image
     skinImage.src = skinBase64;
   });
 };
 
-// Function to load a skin
-const loadSkin = async (skinUrl) => {
+// Function to load a skin with the selected clothing
+const loadSkinWithClothing = async (skinUrl) => {
   const response = await fetch(skinUrl);
   const blob = await response.blob();
   const reader = new FileReader();
 
   reader.onload = async (event) => {
     const skinBase64 = event.target.result;
-    const modifiedSkin = await overlayRobe(skinBase64);
+
+    // Get the selected clothing path
+    const clothingPath = document.getElementById("clothingSelect").value;
+
+    const modifiedSkin = await overlayClothing(skinBase64, clothingPath);
     viewer.loadSkin(modifiedSkin);
 
     // Enable and configure download button
@@ -77,7 +79,7 @@ document.getElementById("upload").addEventListener("change", (e) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = (event) => {
-      loadSkin(event.target.result);
+      loadSkinWithClothing(event.target.result);
     };
     reader.readAsDataURL(file);
   }
@@ -99,9 +101,18 @@ document.getElementById("searchButton").addEventListener("click", async () => {
 
       // Use Crafatar to get the skin
       const skinUrl = `https://crafatar.com/skins/${uuid}`;
-      loadSkin(skinUrl); // Load the skin into the viewer
+      loadSkinWithClothing(skinUrl); // Load the skin with the selected clothing
     } catch (error) {
       alert("An error occurred while fetching the skin.");
     }
+  }
+});
+
+// Update the clothing when a new option is selected
+document.getElementById("clothingSelect").addEventListener("change", async () => {
+  // Reload the skin with the newly selected clothing
+  const skinUrl = viewer.skin; // Reuse the current skin URL
+  if (skinUrl) {
+    loadSkinWithClothing(skinUrl);
   }
 });
