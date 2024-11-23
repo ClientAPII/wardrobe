@@ -22,11 +22,23 @@
             <label for="clothingSelect">Choose Clothing:</label>
             <div class="custom-select">
                 <select id="clothingSelect">
-                    <option value="./robe.png">Soldier</option>
-                    <option value="./school.png">School</option>
+                    <option value="soldier">Soldier</option>
+                    <option value="school">School</option>
                 </select>
             </div>
-            
+
+            <!-- Model type toggle -->
+            <div class="toggle-container">
+                <label>
+                  <input type="radio" name="modelType" value="classic" checked />
+                  <span>Classic</span>
+                </label>
+                <label>
+                  <input type="radio" name="modelType" value="slim" />
+                  <span>Slim</span>
+                </label>
+              </div>
+
             <button id="downloadButton" style="display: none;">Download Skin</button>
         </div>
         <div id="viewer">

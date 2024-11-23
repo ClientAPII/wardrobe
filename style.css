@@ -148,3 +148,44 @@ canvas {
   color: #dcddde;
   pointer-events: none;
 }
+
+/* Styling for the toggle buttons */
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.toggle-container label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  color: #dcddde;
+  cursor: pointer;
+}
+
+.toggle-container input[type="radio"] {
+  display: none;
+}
+
+.toggle-container input[type="radio"] + span {
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 5px;
+  border: 1px solid #72767d;
+  background: #40444b;
+  color: #dcddde;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.toggle-container input[type="radio"]:checked + span {
+  background: #c9302c; /* Highlight for selected */
+  color: white;
+  border-color: #c9302c;
+}
+
+.toggle-container span:hover {
+  background: #c9200c;
+}
