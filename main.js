@@ -12,74 +12,112 @@ const viewer = new SkinViewer({
 viewer.controls.enableZoom = true;
 viewer.controls.enableRotate = true;
 
-let currentSkinBase64 = null; // Store the current skin in base64 format
+let currentSkinBase64 = null; // Store the imported skin in base64 format
 let currentModelType = "classic"; // Default to classic
+const baseSkins = {
+    classic: "./blank-skin-template.png",
+    slim: "./blank-skin-template.png",
+};
 
-// Function to overlay the selected clothing onto the skin
-const overlayClothing = (clothingPath) => {
+// Function to merge the custom head and body with the base skin
+const createCustomSkin = (baseSkinPath, bodyOverlayPath) => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
-    const skinImage = new Image();
-    const clothingImage = new Image();
+    const baseImage = new Image();
+    const overlayImage = new Image();
+    const importedImage = new Image();
 
     canvas.width = 64;
     canvas.height = 64;
 
-    return new Promise((resolve) => {
-        skinImage.onload = () => {
+    return new Promise((resolve, reject) => {
+        baseImage.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             // Draw the base skin
-            ctx.drawImage(skinImage, 0, 0, 64, 16, 0, 0, 64, 16);
+            ctx.drawImage(baseImage, 0, 0);
 
-            clothingImage.onload = () => {
-                // Overlay the selected clothing texture
-                ctx.drawImage(clothingImage, 0, 0, 64, 64);
+            importedImage.onload = () => {
+                // Replace the head from the imported skin
+                ctx.drawImage(importedImage, 0, 0, 64, 16, 0, 0, 64, 16);
 
-                // Convert the modified skin back to base64
-                const modifiedSkinBase64 = canvas.toDataURL("image/png");
-                resolve(modifiedSkinBase64);
+                overlayImage.onload = () => {
+                    // Overlay the custom body texture
+                    ctx.drawImage(overlayImage, 0, 0, 64, 64, 0, 0, 64, 64);
+
+                    // Convert the result back to base64
+                    const customSkinBase64 = canvas.toDataURL("image/png");
+                    resolve(customSkinBase64);
+                };
+
+                overlayImage.onerror = () => {
+                    console.error("Error loading body overlay image:", bodyOverlayPath);
+                    reject(new Error("Failed to load body overlay image."));
+                };
+                overlayImage.src = bodyOverlayPath;
             };
 
-            clothingImage.src = clothingPath; // Path to the selected clothing texture
+            importedImage.onerror = () => {
+                console.error("Error loading imported skin image:", currentSkinBase64);
+                reject(new Error("Failed to load imported skin image."));
+            };
+            importedImage.src = currentSkinBase64;
         };
 
-        skinImage.src = currentSkinBase64;
+        baseImage.onerror = () => {
+            console.error("Error loading base skin image:", baseSkinPath);
+            reject(new Error("Failed to load base skin image."));
+        };
+        baseImage.src = baseSkinPath;
     });
 };
 
-// Function to update the 3D viewer with selected clothing
+
 const updateSkin = async () => {
-  const clothingPath = `./${document.getElementById("clothingSelect").value}_${currentModelType}.png`;
+    const baseSkinPath = baseSkins[currentModelType];
+    const bodyOverlayPath = `./${document.getElementById("clothingSelect").value}_${currentModelType}.png`;
 
-  try {
-      // Apply the selected clothing overlay
-      const modifiedSkin = await overlayClothing(clothingPath);
+    try {
+        //console.log("Base skin path:", baseSkinPath);
+        //console.log("Body overlay path:", bodyOverlayPath);
 
-      // Load the modified skin into the viewer
-      viewer.loadSkin(modifiedSkin);
+        // Create the custom skin
+        const customSkin = await createCustomSkin(baseSkinPath, bodyOverlayPath);
 
-      // Force the correct model type (classic or slim)
-      if (currentModelType === "classic") {
-          viewer.playerObject.skin.slim = false; // Force classic
-          viewer.playerObject.skin.model = "classic"; // Explicitly set to classic
-      } else {
-          viewer.playerObject.skin.slim = true; // Force slim
-          viewer.playerObject.skin.model = "slim"; // Explicitly set to slim
-      }
+        // Recreate the SkinViewer to enforce model changes
+        const canvas = document.getElementById("skinViewer");
+        viewer.dispose(); // Dispose of the existing SkinViewer instance
 
-      // Enable the download button
-      const downloadButton = document.getElementById("downloadButton");
-      downloadButton.style.display = "block";
-      downloadButton.onclick = () => {
-          const link = document.createElement("a");
-          link.href = modifiedSkin;
-          link.download = "modified_skin.png";
-          link.click();
-      };
-  } catch (error) {
-      console.error("Error updating skin:", error);
-      alert("Failed to load or apply the selected clothing.");
-  }
+        const newViewer = new SkinViewer({
+            canvas: canvas,
+            width: 400,
+            height: 600,
+            skin: customSkin,
+            model: currentModelType === "slim" ? "slim" : "classic", // Explicitly set the model
+        });
+
+        newViewer.controls.enableZoom = true;
+        newViewer.controls.enableRotate = true;
+
+        // Replace the old viewer with the new one
+        window.viewer = newViewer; // Ensure it's accessible globally if needed
+
+        //console.log("Skin successfully updated for model type:", currentModelType);
+
+        // Enable the download button
+        const downloadButton = document.getElementById("downloadButton");
+        downloadButton.style.display = "block";
+        downloadButton.onclick = () => {
+            const link = document.createElement("a");
+            link.href = customSkin;
+            link.download = "custom_skin.png";
+            link.click();
+        };
+    } catch (error) {
+        console.error("Error updating skin:", error);
+        alert("Failed to create or apply the custom skin.");
+    }
 };
 
 // Event listener for file upload
@@ -137,6 +175,6 @@ document.getElementById("clothingSelect").addEventListener("change", updateSkin)
 document.querySelectorAll('.toggle-container input[name="modelType"]').forEach((radio) => {
     radio.addEventListener("change", (e) => {
         currentModelType = e.target.value; // Update the model type (classic or slim)
-        updateSkin(); // Refresh the 3D model with the selected type
+        updateSkin(); // Refresh the 3D model with the new base and overlay
     });
 });
